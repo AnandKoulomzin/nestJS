@@ -10,12 +10,12 @@ export class ProductsController {
     }
 
     @Post()
-    addProduct(
+    async addProduct(
         @Body('title') prodTitle: string, 
         @Body('description') prodDesc: string, 
         @Body('price') prodPrice: number
         ) {
-        const generatedId = this.productsService.insertProduct( //if we returned this it would be in html format, we want json
+        const generatedId = await this.productsService.insertProduct( //if we returned this it would be in html format, we want json
             prodTitle, 
             prodDesc, 
             prodPrice
