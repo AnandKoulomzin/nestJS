@@ -21,41 +21,47 @@ export class ProductsService {
         return result.id as string;
     }
 
-    getProducts() {
-        return [...this.products];
+    async getProducts() {
+        const products = await this.productModel.find().exec(); //.exec() gives a better promise
+        return products.map((prod)=> ({id: prod.id, title: prod.title, description: prod.description, price: prod.price}));
     }
 
-    getSingleProduct(productId: string) {
-        const product = this.findProduct(productId)[0];
-        return { ...product} ;
+    async getSingleProduct(productId: string) {
+        const product = await this.findProduct(productId)[0];
+        return { id: product.id, title: product.title, description: product.desc, price: product.price};
     }
 
-    updateProduct(productId: string, title: string, desc: string, price: number) {
-        const [product, index] = this.findProduct(productId);
-        const updatedProduct = {...product};
+    async updateProduct(productId: string, title: string, desc: string, price: number) {
+        const updatedProduct = await this.findProduct(productId);
         if (title) {
             updatedProduct.title = title;
         }
         if (desc) {
-            updatedProduct.desc = desc;
+            updatedProduct.description = desc;
         }
         if (price) {
             updatedProduct.price = price;
         }
-        this.products[index] = updatedProduct;
+        updatedProduct.save();
     }
 
-    private findProduct(id: string): [Product, number] {
-        const productIndex = this.products.findIndex(prod => prod.id === id);
-        const product = this.products[productIndex];
+    private async findProduct(id: string): Promise<Product> {
+        let product;
+        try {
+            product = await this.productModel.findById(id).exec();
+        } catch (error) {
+            throw new NotFoundException('could not find product');
+        }
         if (!product) {
             throw new NotFoundException('could not find product');
         }
-        return [product, productIndex];
+        return product;
     }
 
-    deleteProduct(prodId: string) {
-        const index = this.findProduct(prodId)[1];
-        this.products.splice(index, 1);
+    async deleteProduct(prodId: string) {
+        const result = await this.productModel.deleteOne({_id: prodId}).exec();
+        if (result.n === 0 ) {
+            throw new NotFoundException('could not find product');
+        }
     }
 }
